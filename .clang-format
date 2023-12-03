@@ -1,0 +1,9 @@
+IndentWidth: 8
+TabWidth: 8
+UseTab: Always
+BreakBeforeBraces: Attach
+ColumnLimit: 80
+ContinuationIndentWidth: 8
+IndentCaseLabels: True
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
