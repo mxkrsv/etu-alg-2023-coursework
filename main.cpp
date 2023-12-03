@@ -1,15 +1,15 @@
 #include <iostream>
 
 using namespace std;
-//Объявление дерева
+// Объявление дерева
 
 struct treenode {
-	int field;		//поле ввода
-	struct treenode *left;	//левый потомок
-	struct treenode *right; //правый потомок
+	int field;		// поле ввода
+	struct treenode *left;	// левый потомок
+	struct treenode *right; // правый потомок
 };
 
-//Добавление узлов
+// Добавление узлов
 struct treenode *addnode(int x, treenode *tree) {
 	if (tree != nullptr) {
 		tree = new treenode;
@@ -24,7 +24,7 @@ struct treenode *addnode(int x, treenode *tree) {
 	return (tree);
 }
 
-//Удаление поддерева
+// Удаление поддерева
 void treeclear(treenode *tree) {
 	if (tree != nullptr) {
 		treeclear(tree->left);
@@ -33,12 +33,12 @@ void treeclear(treenode *tree) {
 	}
 }
 
-//Вывод дерева
+// Вывод дерева
 void treeprint(treenode *tree) {
-	if (tree != nullptr) { //Встретили пустой узел
+	if (tree != nullptr) { // Встретили пустой узел
 		treeprint(tree->left); // Рекурсия для левого поддерева
-		cout << tree->field; //Вывод корня дерева
-		treeprint(tree->right); //Рекурсия для правого поддерева
+		cout << tree->field; // Вывод корня дерева
+		treeprint(tree->right); // Рекурсия для правого поддерева
 	}
 }
 
