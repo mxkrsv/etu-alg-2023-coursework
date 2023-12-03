@@ -42,12 +42,15 @@ void treeprint(treenode *tree) {
 	}
 }
 
+/*
 int ReadFile(size_t *len, ) {
 	if (f == nullptr)
 		return 1;
 	size_t i;
 }
+*/
 
+/*
 int InitializationMass(FILE *f, int *Frequencies) {
 	if (f == nullptr)
 		return 1;
@@ -56,6 +59,7 @@ int InitializationMass(FILE *f, int *Frequencies) {
 	size_t i;
 	for (i = 0; i < len; i++)
 }
+*/
 
 void InitTree(treenode *tree) {
 }
