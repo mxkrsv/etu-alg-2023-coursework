@@ -7,3 +7,4 @@ ContinuationIndentWidth: 8
 IndentCaseLabels: True
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
+AccessModifierOffset: 0
