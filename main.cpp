@@ -32,8 +32,7 @@ bool TreeNode::isLeaf() {
 void TreeNode::encode(char *str, int length, Data &c) {
 	// найден листовой узел
 	if (this->isLeaf()) {
-		std::copy(str, str + length,
-			  c.huffmanCode[static_cast<unsigned char>(this->ch)]);
+		std::copy(str, str + length, c.huffmanCode[this->ch]);
 	}
 
 	str[length] = '0';
@@ -105,12 +104,8 @@ int WriteTextToFile(char *text, Data &c) {
 
 	for (char *ptr = text; *ptr != '\0'; ++ptr) {
 		// Записывем коды Хаффмана в двоичном виде
-		for (int i = 0;
-		     c.huffmanCode[static_cast<unsigned char>(*ptr)][i] != '\0';
-		     ++i) {
-			char bit =
-				c.huffmanCode[static_cast<unsigned char>(*ptr)]
-					     [i];
+		for (int i = 0; c.huffmanCode[*ptr][i] != '\0'; ++i) {
+			char bit = c.huffmanCode[*ptr][i];
 			writeBit(newfile, bit, buffer, bitsWritten);
 		}
 	}
@@ -171,13 +166,12 @@ void Huffman(char *text) {
 
 	// Подсчет частот и создание отсортированного списка
 	for (char *ptr = text; *ptr != '\0'; ptr++) {
-		c.ascii[static_cast<unsigned char>(*ptr)]++;
+		c.ascii[*ptr]++;
 	}
 
 	for (int i = 0; i < 256; i++) {
 		if (c.ascii[i] > 0) {
-			TreeNode *newNode =
-				new TreeNode(static_cast<char>(i), c.ascii[i]);
+			TreeNode *newNode = new TreeNode(i, c.ascii[i]);
 			insertSorted(head, newNode);
 		}
 	}
@@ -213,8 +207,7 @@ void Huffman(char *text) {
 	std::cout << "\nThe coding string is:\n";
 	for (char *ptr = text; *ptr != '\0'; ++ptr) {
 		// Вывод кодов
-		std::cout << c.huffmanCode[static_cast<unsigned char>(*ptr)]
-			  << " ";
+		std::cout << c.huffmanCode[*ptr] << " ";
 	}
 	std::cout << std::endl;
 
