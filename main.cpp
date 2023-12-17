@@ -7,23 +7,23 @@ union Data {
 	char huffmanCode[256][256];
 };
 
-class Node {
+class TreeNode {
 	public:
-	int freq;    // Частота - данные для дерева
-	Node *left;  // Левое поддерево
-	Node *right; // Правое поддерево
+	int freq;	 // Частота - данные для дерева
+	TreeNode *left;	 // Левое поддерево
+	TreeNode *right; // Правое поддерево
 	unsigned char ch; // Символ, который будет закодирован
-	Node *next; // Для связанного списка
-	Node(char c, int f)
+	TreeNode *next; // Для связанного списка
+	TreeNode(char c, int f)
 	    : freq(f), left(nullptr), right(nullptr), ch(c), next(nullptr) {
 	}
 };
 
-bool isLeaf(Node *root) {
+bool isLeaf(TreeNode *root) {
 	return (root->left == nullptr && root->right == nullptr);
 }
 
-void encode(Node *root, char *str, int length, Data &c) {
+void encode(TreeNode *root, char *str, int length, Data &c) {
 	if (root == nullptr) {
 		return;
 	}
@@ -40,22 +40,22 @@ void encode(Node *root, char *str, int length, Data &c) {
 	encode(root->right, str, length + 1, c);
 }
 
-Node *popMin(Node *&head) {
+TreeNode *popMin(TreeNode *&head) {
 	if (head == nullptr) {
 		return nullptr;
 	}
-	Node *minNode = head;
+	TreeNode *minNode = head;
 	head = head->next;
 	minNode->next = nullptr;
 	return minNode;
 }
 
-void insertSorted(Node *&head, Node *newNode) {
+void insertSorted(TreeNode *&head, TreeNode *newNode) {
 	if (head == nullptr || newNode->freq <= head->freq) {
 		newNode->next = head;
 		head = newNode;
 	} else {
-		Node *current = head;
+		TreeNode *current = head;
 		while (current->next != nullptr &&
 		       current->next->freq < newNode->freq) {
 			current = current->next;
@@ -159,7 +159,7 @@ char *ReadTextfromFile() {
 
 void Huffman(char *text) {
 	Data c;
-	Node *head = nullptr; // Связанный список для отсортированных узлов
+	TreeNode *head = nullptr; // Связанный список для отсортированных узлов
 
 	// Пустая строка
 	if (text == nullptr) {
@@ -173,16 +173,16 @@ void Huffman(char *text) {
 
 	for (int i = 0; i < 256; i++) {
 		if (c.ascii[i] > 0) {
-			Node *newNode =
-				new Node(static_cast<char>(i), c.ascii[i]);
+			TreeNode *newNode =
+				new TreeNode(static_cast<char>(i), c.ascii[i]);
 			insertSorted(head, newNode);
 		}
 	}
 
-	Node *root = nullptr;
+	TreeNode *root = nullptr;
 	while (head != nullptr) {
-		Node *firstMin = popMin(head);
-		Node *secondMin = popMin(head);
+		TreeNode *firstMin = popMin(head);
+		TreeNode *secondMin = popMin(head);
 
 		// Если нашли только один узел, то это корень дерева
 		if (secondMin == nullptr) {
@@ -191,8 +191,8 @@ void Huffman(char *text) {
 		}
 
 		// Создаем новый узел слиянием двух узлов с минимальной частотой
-		Node *newNode =
-			new Node('\0', firstMin->freq + secondMin->freq);
+		TreeNode *newNode =
+			new TreeNode('\0', firstMin->freq + secondMin->freq);
 		newNode->left = firstMin;
 		newNode->right = secondMin;
 
