@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -26,20 +28,28 @@ class TreeNode {
 };
 
 bool TreeNode::isLeaf() {
+	assert(this);
+
 	return (this->left == nullptr && this->right == nullptr);
 }
 
 void TreeNode::encode(char *str, int length, Data &c) {
+	assert(this);
+
 	// найден листовой узел
 	if (this->isLeaf()) {
 		std::copy(str, str + length, c.huffmanCode[this->ch]);
 	}
 
 	str[length] = '0';
-	this->left->encode(str, length + 1, c);
+	if (this->left) {
+		this->left->encode(str, length + 1, c);
+	}
 
 	str[length] = '1';
-	this->right->encode(str, length + 1, c);
+	if (this->right) {
+		this->right->encode(str, length + 1, c);
+	}
 }
 
 TreeNode *popMin(TreeNode *&head) {
@@ -88,7 +98,7 @@ void flushBits(FILE *file, char &buffer, int &bitsWritten) {
 	}
 }
 
-int WriteTextToFile(char *text, Data &c) {
+int WriteTextToFile(uint8_t *text, size_t size, Data &c) {
 	char nameFile[100];
 	std::cout << "\nWrite the name for the compressed file\n" << std::endl;
 	std::cin >> nameFile;
@@ -102,10 +112,10 @@ int WriteTextToFile(char *text, Data &c) {
 	char buffer = 0;
 	int bitsWritten = 0;
 
-	for (char *ptr = text; *ptr != '\0'; ++ptr) {
+	for (size_t j = 0; j < size; j++) {
 		// Записывем коды Хаффмана в двоичном виде
-		for (int i = 0; c.huffmanCode[*ptr][i] != '\0'; ++i) {
-			char bit = c.huffmanCode[*ptr][i];
+		for (int i = 0; c.huffmanCode[text[j]][i] != '\0'; ++i) {
+			char bit = c.huffmanCode[text[j]][i];
 			writeBit(newfile, bit, buffer, bitsWritten);
 		}
 	}
@@ -123,9 +133,8 @@ int WriteTextToFile(char *text, Data &c) {
 	return 0;
 }
 
-char *ReadTextfromFile() {
+uint8_t *ReadTextfromFile(size_t *size) {
 	char filePath[100];
-	size_t fileSize;
 
 	std::cout << "Enter file path: ";
 	std::cin.getline(filePath, sizeof(filePath));
@@ -137,25 +146,25 @@ char *ReadTextfromFile() {
 	}
 
 	fseek(file, 0, SEEK_END);
-	fileSize = ftell(file);
+	*size = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
-	char *text = new char[fileSize + 1];
+	uint8_t *text = new uint8_t[*size];
 	if (text == nullptr) {
 		std::cout << "Memory allocation error!" << std::endl;
 		fclose(file);
 		return nullptr;
 	}
 
-	memset(text, 0, fileSize + 1);
-	fread(text, sizeof(char), fileSize, file);
+	// memset(text, 0, *size);
+	fread(text, sizeof(char), *size, file);
 
 	fclose(file);
 
 	return text;
 }
 
-void Huffman(char *text) {
+void Huffman(uint8_t *text, size_t size) {
 	Data c;
 	TreeNode *head = nullptr; // Связанный список для отсортированных узлов
 
@@ -165,8 +174,10 @@ void Huffman(char *text) {
 	}
 
 	// Подсчет частот и создание отсортированного списка
-	for (char *ptr = text; *ptr != '\0'; ptr++) {
-		c.ascii[*ptr]++;
+	// Цикл до размера файла, по каждому символу отдельно
+	// (т.е. считал символ, отсортировал с учетом нового символа)
+	for (size_t i = 0; i < size; i++) {
+		c.ascii[text[i]]++;
 	}
 
 	for (int i = 0; i < 256; i++) {
@@ -203,11 +214,11 @@ void Huffman(char *text) {
 	root->encode(str, 0, c);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
-	WriteTextToFile(text, c);
+	WriteTextToFile(text, size, c);
 	std::cout << "\nThe coding string is:\n";
-	for (char *ptr = text; *ptr != '\0'; ++ptr) {
+	for (size_t i = 0; i < size; i++) {
 		// Вывод кодов
-		std::cout << c.huffmanCode[*ptr] << " ";
+		std::cout << c.huffmanCode[text[i]] << " ";
 	}
 	std::cout << std::endl;
 
@@ -216,7 +227,8 @@ void Huffman(char *text) {
 }
 
 int main() {
-	char *text = ReadTextfromFile();
-	Huffman(text);
+	size_t file_size;
+	uint8_t *text = ReadTextfromFile(&file_size);
+	Huffman(text, file_size);
 	return 0;
 }
