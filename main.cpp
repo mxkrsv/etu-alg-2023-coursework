@@ -14,13 +14,18 @@ class TreeNode {
 	TreeNode *right; // Правое поддерево
 	unsigned char ch; // Символ, который будет закодирован
 	TreeNode *next; // Для связанного списка
+
+	// Constructor
 	TreeNode(char c, int f)
 	    : freq(f), left(nullptr), right(nullptr), ch(c), next(nullptr) {
 	}
+
+	// Methods
+	bool isLeaf();
 };
 
-bool isLeaf(TreeNode *root) {
-	return (root->left == nullptr && root->right == nullptr);
+bool TreeNode::isLeaf() {
+	return (this->left == nullptr && this->right == nullptr);
 }
 
 void encode(TreeNode *root, char *str, int length, Data &c) {
@@ -28,7 +33,7 @@ void encode(TreeNode *root, char *str, int length, Data &c) {
 		return;
 	}
 	// найден листовой узел
-	if (isLeaf(root)) {
+	if (root->isLeaf()) {
 		std::copy(str, str + length,
 			  c.huffmanCode[static_cast<unsigned char>(root->ch)]);
 	}
