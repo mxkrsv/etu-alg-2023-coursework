@@ -88,7 +88,7 @@ void flushBits(FILE *file, char &buffer, int &bitsWritten) {
 	}
 }
 
-int WriteTextToFile(char *&text, Data &c) {
+int WriteTextToFile(char *text, Data &c) {
 	char nameFile[100];
 	cout << "\nWrite the name for the compressed file\n" << endl;
 	cin >> nameFile;
@@ -127,7 +127,7 @@ int WriteTextToFile(char *&text, Data &c) {
 	return 0;
 }
 
-int ReadTextfromFile(char *&text) {
+char *ReadTextfromFile() {
 	char filePath[100];
 	size_t fileSize;
 
@@ -137,25 +137,26 @@ int ReadTextfromFile(char *&text) {
 	FILE *file = fopen(filePath, "rb");
 	if (file == nullptr) {
 		perror("File opening error");
-		return 1;
+		return nullptr;
 	}
 
 	fseek(file, 0, SEEK_END);
 	fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
-	text = new char[fileSize + 1];
+	char *text = new char[fileSize + 1];
 	if (text == nullptr) {
 		cout << "Memory allocation error!" << endl;
 		fclose(file);
-		return 1;
+		return nullptr;
 	}
 
 	memset(text, 0, fileSize + 1);
 	fread(text, sizeof(char), fileSize, file);
 
 	fclose(file);
-	return 0;
+
+	return text;
 }
 
 void Huffman(char *text) {
@@ -220,8 +221,7 @@ void Huffman(char *text) {
 }
 
 int main() {
-	char *text = nullptr;
-	ReadTextfromFile(text);
+	char *text = ReadTextfromFile();
 	Huffman(text);
 	return 0;
 }
