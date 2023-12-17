@@ -22,27 +22,25 @@ class TreeNode {
 
 	// Methods
 	bool isLeaf();
+	void encode(char *, int, Data &);
 };
 
 bool TreeNode::isLeaf() {
 	return (this->left == nullptr && this->right == nullptr);
 }
 
-void encode(TreeNode *root, char *str, int length, Data &c) {
-	if (root == nullptr) {
-		return;
-	}
+void TreeNode::encode(char *str, int length, Data &c) {
 	// найден листовой узел
-	if (root->isLeaf()) {
+	if (this->isLeaf()) {
 		std::copy(str, str + length,
-			  c.huffmanCode[static_cast<unsigned char>(root->ch)]);
+			  c.huffmanCode[static_cast<unsigned char>(this->ch)]);
 	}
 
 	str[length] = '0';
-	encode(root->left, str, length + 1, c);
+	this->left->encode(str, length + 1, c);
 
 	str[length] = '1';
-	encode(root->right, str, length + 1, c);
+	this->right->encode(str, length + 1, c);
 }
 
 TreeNode *popMin(TreeNode *&head) {
@@ -208,7 +206,7 @@ void Huffman(char *text) {
 	// Буффер для хранения кодов
 	char str[256];
 
-	encode(root, str, 0, c);
+	root->encode(str, 0, c);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
 	WriteTextToFile(text, c);
