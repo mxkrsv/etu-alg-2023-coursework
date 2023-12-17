@@ -98,7 +98,7 @@ void flushBits(FILE *file, char &buffer, int &bitsWritten) {
 	}
 }
 
-int WriteTextToFile(uint8_t *text, size_t size, Data &c) {
+int writeTextToFile(uint8_t *text, size_t size, Data &c) {
 	char nameFile[100];
 	std::cout << "\nWrite the name for the compressed file\n" << std::endl;
 	std::cin >> nameFile;
@@ -133,7 +133,7 @@ int WriteTextToFile(uint8_t *text, size_t size, Data &c) {
 	return 0;
 }
 
-uint8_t *ReadTextfromFile(size_t *size) {
+uint8_t *readTextFromFile(size_t *size) {
 	char filePath[100];
 
 	std::cout << "Enter file path: ";
@@ -164,18 +164,13 @@ uint8_t *ReadTextfromFile(size_t *size) {
 	return text;
 }
 
-void Huffman(uint8_t *text, size_t size) {
+void huffman(uint8_t *text, size_t size) {
 	Data c;
 	TreeNode *head = nullptr; // Связанный список для отсортированных узлов
 
-	// Пустая строка
-	if (text == nullptr) {
-		return;
-	}
+	assert(text && size);
 
-	// Подсчет частот и создание отсортированного списка
-	// Цикл до размера файла, по каждому символу отдельно
-	// (т.е. считал символ, отсортировал с учетом нового символа)
+	// Count the frequencies
 	for (size_t i = 0; i < size; i++) {
 		c.ascii[text[i]]++;
 	}
@@ -214,7 +209,7 @@ void Huffman(uint8_t *text, size_t size) {
 	root->encode(str, 0, c);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
-	WriteTextToFile(text, size, c);
+	writeTextToFile(text, size, c);
 	std::cout << "\nThe coding string is:\n";
 	for (size_t i = 0; i < size; i++) {
 		// Вывод кодов
@@ -228,7 +223,7 @@ void Huffman(uint8_t *text, size_t size) {
 
 int main() {
 	size_t file_size;
-	uint8_t *text = ReadTextfromFile(&file_size);
-	Huffman(text, file_size);
+	uint8_t *text = readTextFromFile(&file_size);
+	huffman(text, file_size);
 	return 0;
 }
