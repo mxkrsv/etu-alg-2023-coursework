@@ -220,5 +220,3 @@ int main() {
 	Huffman(text);
 	return 0;
 }
-
-// D:\\Huffman\\MainHuffman\\text.txt
