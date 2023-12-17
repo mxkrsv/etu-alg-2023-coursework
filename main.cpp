@@ -2,8 +2,6 @@
 #include <fstream>
 #include <iostream>
 
-using namespace std;
-
 union Data {
 	int ascii[256] = {0};
 	char huffmanCode[256][256];
@@ -31,8 +29,8 @@ void encode(Node *root, char *str, int length, Data &c) {
 	}
 	// найден листовой узел
 	if (isLeaf(root)) {
-		copy(str, str + length,
-		     c.huffmanCode[static_cast<unsigned char>(root->ch)]);
+		std::copy(str, str + length,
+			  c.huffmanCode[static_cast<unsigned char>(root->ch)]);
 	}
 
 	str[length] = '0';
@@ -90,12 +88,12 @@ void flushBits(FILE *file, char &buffer, int &bitsWritten) {
 
 int WriteTextToFile(char *text, Data &c) {
 	char nameFile[100];
-	cout << "\nWrite the name for the compressed file\n" << endl;
-	cin >> nameFile;
+	std::cout << "\nWrite the name for the compressed file\n" << std::endl;
+	std::cin >> nameFile;
 
 	FILE *newfile = fopen(nameFile, "wb");
 	if (newfile == nullptr) {
-		cout << "Error opening file for writing!" << endl;
+		std::cout << "Error opening file for writing!" << std::endl;
 		return 1;
 	}
 
@@ -119,11 +117,11 @@ int WriteTextToFile(char *text, Data &c) {
 	flushBits(newfile, buffer, bitsWritten);
 
 	if (fclose(newfile) != 0) {
-		cout << "Error closing file!" << endl;
+		std::cout << "Error closing file!" << std::endl;
 		return 1;
 	}
 
-	cout << "File successfully created: " << nameFile << endl;
+	std::cout << "File successfully created: " << nameFile << std::endl;
 	return 0;
 }
 
@@ -131,8 +129,8 @@ char *ReadTextfromFile() {
 	char filePath[100];
 	size_t fileSize;
 
-	cout << "Enter file path: ";
-	cin.getline(filePath, sizeof(filePath));
+	std::cout << "Enter file path: ";
+	std::cin.getline(filePath, sizeof(filePath));
 
 	FILE *file = fopen(filePath, "rb");
 	if (file == nullptr) {
@@ -146,7 +144,7 @@ char *ReadTextfromFile() {
 
 	char *text = new char[fileSize + 1];
 	if (text == nullptr) {
-		cout << "Memory allocation error!" << endl;
+		std::cout << "Memory allocation error!" << std::endl;
 		fclose(file);
 		return nullptr;
 	}
@@ -207,14 +205,15 @@ void Huffman(char *text) {
 
 	encode(root, str, 0, c);
 
-	cout << "\nThe original string is:\n" << text << endl;
+	std::cout << "\nThe original string is:\n" << text << std::endl;
 	WriteTextToFile(text, c);
-	cout << "\nThe coding string is:\n";
+	std::cout << "\nThe coding string is:\n";
 	for (char *ptr = text; *ptr != '\0'; ++ptr) {
 		// Вывод кодов
-		cout << c.huffmanCode[static_cast<unsigned char>(*ptr)] << " ";
+		std::cout << c.huffmanCode[static_cast<unsigned char>(*ptr)]
+			  << " ";
 	}
-	cout << endl;
+	std::cout << std::endl;
 
 	// Освобождение памяти
 	delete[] text;
