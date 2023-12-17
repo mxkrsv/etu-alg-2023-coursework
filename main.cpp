@@ -10,7 +10,7 @@ union Data {
 };
 
 class Node {
-      public:
+	public:
 	int freq;    // Частота - данные для дерева
 	Node *left;  // Левое поддерево
 	Node *right; // Правое поддерево
