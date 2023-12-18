@@ -4,6 +4,14 @@
 #include <fstream>
 #include <iostream>
 
+#define DEBUG
+
+#ifdef DEBUG
+#define DPRINTF(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define DPRINTF(...) ;
+#endif
+
 union Data {
 	int ascii[256] = {0};
 	char huffmanCode[256][256];
@@ -11,21 +19,54 @@ union Data {
 
 class TreeNode {
 	public:
-	int freq;	 // Частота - данные для дерева
 	TreeNode *left;	 // Левое поддерево
 	TreeNode *right; // Правое поддерево
-	unsigned char ch; // Символ, который будет закодирован
-	TreeNode *next; // Для связанного списка
+
+	// Payload
+
+	// Character to be encoded
+	uint8_t ch;
+	// Frequency for a tree
+	int freq;
 
 	// Constructor
 	TreeNode(char c, int f)
-	    : freq(f), left(nullptr), right(nullptr), ch(c), next(nullptr) {
+	    : left(nullptr), right(nullptr), ch(c), freq(f) {
 	}
 
 	// Methods
 	bool isLeaf();
 	void encode(char *, int, Data &);
 };
+
+class ListNode {
+	public:
+	ListNode *next; // Для связанного списка
+
+	// Payload
+	TreeNode data;
+
+	// Constructor
+	ListNode(char c, int f) : next(nullptr), data(c, f) {
+	}
+
+	// Methods
+	ListNode *popMin(ListNode **);
+	ListNode *insertSorted(ListNode *);
+};
+
+// class List {
+//	public:
+//
+//	// Methods
+//	ListNode *popMin();
+//	void insertSorted(ListNode *);
+//
+//	private:
+//
+//	// Payload
+//	ListNode head;
+// }
 
 bool TreeNode::isLeaf() {
 	assert(this);
@@ -52,28 +93,39 @@ void TreeNode::encode(char *str, int length, Data &c) {
 	}
 }
 
-TreeNode *popMin(TreeNode *&head) {
-	if (head == nullptr) {
+ListNode *ListNode::popMin(ListNode **result) {
+	assert(result);
+
+	*result = this;
+
+	if (*result) {
+		// Invalidate the node
+		ListNode *next = this->next;
+		this->next = nullptr;
+
+		return next;
+	} else {
 		return nullptr;
 	}
-	TreeNode *minNode = head;
-	head = head->next;
-	minNode->next = nullptr;
-	return minNode;
 }
 
-void insertSorted(TreeNode *&head, TreeNode *newNode) {
-	if (head == nullptr || newNode->freq <= head->freq) {
-		newNode->next = head;
-		head = newNode;
+ListNode *ListNode::insertSorted(ListNode *newNode) {
+	assert(newNode);
+
+	if (!this || newNode->data.freq <= this->data.freq) {
+		newNode->next = this;
+		return newNode;
 	} else {
-		TreeNode *current = head;
+		ListNode *current = this;
 		while (current->next != nullptr &&
-		       current->next->freq < newNode->freq) {
+		       current->next->data.freq < newNode->data.freq) {
+			assert(current != current->next);
 			current = current->next;
 		}
 		newNode->next = current->next;
 		current->next = newNode;
+
+		return this;
 	}
 }
 
@@ -166,7 +218,6 @@ uint8_t *readTextFromFile(size_t *size) {
 
 void huffman(uint8_t *text, size_t size) {
 	Data c;
-	TreeNode *head = nullptr; // Связанный список для отсортированных узлов
 
 	assert(text && size);
 
@@ -175,44 +226,52 @@ void huffman(uint8_t *text, size_t size) {
 		c.ascii[text[i]]++;
 	}
 
+	// Linked list for the sorted nodes
+	ListNode *listHead = nullptr;
+
 	for (int i = 0; i < 256; i++) {
 		if (c.ascii[i] > 0) {
-			TreeNode *newNode = new TreeNode(i, c.ascii[i]);
-			insertSorted(head, newNode);
+			ListNode *newNode = new ListNode(i, c.ascii[i]);
+			listHead = listHead->insertSorted(newNode);
 		}
 	}
 
-	TreeNode *root = nullptr;
-	while (head != nullptr) {
-		TreeNode *firstMin = popMin(head);
-		TreeNode *secondMin = popMin(head);
+	TreeNode *treeRoot = nullptr;
+	while (true) {
+		ListNode *firstMin;
+		ListNode *secondMin;
+
+		listHead = listHead->popMin(&firstMin);
+		listHead = listHead->popMin(&secondMin);
+
+		assert(firstMin);
 
 		// Если нашли только один узел, то это корень дерева
-		if (secondMin == nullptr) {
-			root = firstMin;
+		if (!secondMin) {
+			treeRoot = &firstMin->data;
 			break;
 		}
 
 		// Создаем новый узел слиянием двух узлов с минимальной частотой
-		TreeNode *newNode =
-			new TreeNode('\0', firstMin->freq + secondMin->freq);
-		newNode->left = firstMin;
-		newNode->right = secondMin;
+		ListNode *newNode = new ListNode(
+			'\0', firstMin->data.freq + secondMin->data.freq);
+		newNode->data.left = &firstMin->data;
+		newNode->data.right = &secondMin->data;
 
 		// Вставляем новый узел в отсортированный список
-		insertSorted(head, newNode);
+		listHead = listHead->insertSorted(newNode);
 	}
 
 	// Буффер для хранения кодов
 	char str[256];
 
-	root->encode(str, 0, c);
+	treeRoot->encode(str, 0, c);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
 	writeTextToFile(text, size, c);
 	std::cout << "\nThe coding string is:\n";
 	for (size_t i = 0; i < size; i++) {
-		// Вывод кодов
+		//  Вывод кодов
 		std::cout << c.huffmanCode[text[i]] << " ";
 	}
 	std::cout << std::endl;
