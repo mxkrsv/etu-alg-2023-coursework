@@ -12,15 +12,26 @@
 #define DPRINTF(...) ;
 #endif
 
-union Data {
+struct Data {
 	int ascii[256] = {0};
-	char huffmanCode[256][256];
+	char **huffmanCode = new char *[256];
+	Data() {
+		for (int i = 0; i < 256; ++i) {
+			huffmanCode[i] = nullptr;
+		}
+	}
+	~Data() {
+		for (int i = 0; i < 256; ++i) {
+			delete[] huffmanCode[i];
+		}
+		delete[] huffmanCode;
+	}
 };
 
 class TreeNode {
 	public:
-	TreeNode *left;	 // Левое поддерево
-	TreeNode *right; // Правое поддерево
+	TreeNode *left;
+	TreeNode *right;
 
 	// Payload
 
@@ -74,22 +85,28 @@ bool TreeNode::isLeaf() {
 	return (this->left == nullptr && this->right == nullptr);
 }
 
-void TreeNode::encode(char *str, int length, Data &c) {
+void TreeNode::encode(char *code, int length, Data &c) {
 	assert(this);
 
-	// найден листовой узел
 	if (this->isLeaf()) {
-		std::copy(str, str + length, c.huffmanCode[this->ch]);
+		c.huffmanCode[this->ch] = new char[length + 1];
+		strncpy(c.huffmanCode[this->ch], code, length);
+		c.huffmanCode[this->ch][length] = '\0';
+
+		std::cout << "Character: " << this->ch
+			  << ", Code: " << c.huffmanCode[this->ch] << std::endl;
 	}
 
-	str[length] = '0';
-	if (this->left) {
-		this->left->encode(str, length + 1, c);
-	}
+	if (length < 255) {
+		if (this->left) {
+			code[length] = '0';
+			this->left->encode(code, length + 1, c);
+		}
 
-	str[length] = '1';
-	if (this->right) {
-		this->right->encode(str, length + 1, c);
+		if (this->right) {
+			code[length] = '1';
+			this->right->encode(code, length + 1, c);
+		}
 	}
 }
 
@@ -129,9 +146,11 @@ ListNode *ListNode::insertSorted(ListNode *newNode) {
 	}
 }
 
-void writeBit(FILE *file, char bit, char &buffer, int &bitsWritten) {
+void writeBit(FILE *file, uint8_t bit, uint8_t &buffer, int &bitsWritten) {
+	assert(file);
+
 	buffer <<= 1;
-	buffer |= (bit & 1);
+	buffer |= (bit - '0');
 	bitsWritten++;
 
 	if (bitsWritten == 8) {
@@ -141,7 +160,9 @@ void writeBit(FILE *file, char bit, char &buffer, int &bitsWritten) {
 	}
 }
 
-void flushBits(FILE *file, char &buffer, int &bitsWritten) {
+void flushBits(FILE *file, uint8_t &buffer, int &bitsWritten) {
+	assert(file);
+
 	if (bitsWritten > 0) {
 		buffer <<= (8 - bitsWritten);
 		fwrite(&buffer, 1, 1, file);
@@ -161,13 +182,13 @@ int writeTextToFile(uint8_t *text, size_t size, Data &c) {
 		return 1;
 	}
 
-	char buffer = 0;
+	uint8_t buffer = 0;
 	int bitsWritten = 0;
 
 	for (size_t j = 0; j < size; j++) {
 		// Записывем коды Хаффмана в двоичном виде
 		for (int i = 0; c.huffmanCode[text[j]][i] != '\0'; ++i) {
-			char bit = c.huffmanCode[text[j]][i];
+			uint8_t bit = c.huffmanCode[text[j]][i];
 			writeBit(newfile, bit, buffer, bitsWritten);
 		}
 	}
@@ -262,10 +283,10 @@ void huffman(uint8_t *text, size_t size) {
 		listHead = listHead->insertSorted(newNode);
 	}
 
-	// Буффер для хранения кодов
-	char str[256];
+	// Codes buffer
+	char code[256];
 
-	treeRoot->encode(str, 0, c);
+	treeRoot->encode(code, 0, c);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
 	writeTextToFile(text, size, c);
@@ -278,10 +299,12 @@ void huffman(uint8_t *text, size_t size) {
 
 	// Освобождение памяти
 	delete[] text;
+	delete listHead;
 }
 
 int main() {
 	size_t file_size;
+	// TODO: fix data flow
 	uint8_t *text = readTextFromFile(&file_size);
 	huffman(text, file_size);
 	return 0;
