@@ -1,5 +1,5 @@
 build:
-	g++ -Wall -Wextra -pedantic main.cpp -o huffman
+	g++ -g -Wall -Wextra -pedantic main.cpp -o huffman
 
 clean:
 	rm -f huffman
