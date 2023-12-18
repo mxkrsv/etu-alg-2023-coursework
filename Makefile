@@ -1,7 +1,7 @@
 build:
-	g++ -g -Wall -Wextra -pedantic main.cpp -o huffman
+	g++ -g -Wall -Wextra -pedantic static.cpp -o static_huffman
 
 clean:
-	rm -f huffman
+	rm -f static_huffman
 
 .PHONY: clean
