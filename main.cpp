@@ -12,21 +12,23 @@
 #define DPRINTF(...) ;
 #endif
 
-struct Data {
-	int ascii[256] = {0};
-	char **huffmanCode = new char *[256];
-	Data() {
+class HuffmanDict {
+	public:
+	char **huffmanCodes = new char *[256];
+	HuffmanDict() {
 		for (int i = 0; i < 256; ++i) {
-			huffmanCode[i] = nullptr;
+			huffmanCodes[i] = nullptr;
 		}
 	}
-	~Data() {
+	~HuffmanDict() {
 		for (int i = 0; i < 256; ++i) {
-			delete[] huffmanCode[i];
+			delete[] huffmanCodes[i];
 		}
-		delete[] huffmanCode;
+		delete[] huffmanCodes;
 	}
 };
+
+typedef size_t FrequencyDict[256];
 
 class TreeNode {
 	public:
@@ -47,7 +49,7 @@ class TreeNode {
 
 	// Methods
 	bool isLeaf();
-	void encode(char *, int, Data &);
+	void encode(char *, int, HuffmanDict &);
 };
 
 class ListNode {
@@ -85,28 +87,29 @@ bool TreeNode::isLeaf() {
 	return (this->left == nullptr && this->right == nullptr);
 }
 
-void TreeNode::encode(char *code, int length, Data &c) {
+void TreeNode::encode(char *currentCode, int curLen, HuffmanDict &dict) {
 	assert(this);
 
 	if (this->isLeaf()) {
-		c.huffmanCode[this->ch] = new char[length + 1];
-		strncpy(c.huffmanCode[this->ch], code, length);
-		c.huffmanCode[this->ch][length] = '\0';
+		dict.huffmanCodes[this->ch] = new char[curLen + 1];
+		strncpy(dict.huffmanCodes[this->ch], currentCode, curLen);
+		dict.huffmanCodes[this->ch][curLen] = '\0';
 
 		std::cout << "Character: " << this->ch
-			  << ", Code: " << c.huffmanCode[this->ch] << std::endl;
+			  << ", Code: " << dict.huffmanCodes[this->ch]
+			  << std::endl;
 	}
 
-	if (length < 255) {
-		if (this->left) {
-			code[length] = '0';
-			this->left->encode(code, length + 1, c);
-		}
+	assert(curLen < 255);
 
-		if (this->right) {
-			code[length] = '1';
-			this->right->encode(code, length + 1, c);
-		}
+	if (this->left) {
+		currentCode[curLen] = '0';
+		this->left->encode(currentCode, curLen + 1, dict);
+	}
+
+	if (this->right) {
+		currentCode[curLen] = '1';
+		this->right->encode(currentCode, curLen + 1, dict);
 	}
 }
 
@@ -171,7 +174,7 @@ void flushBits(FILE *file, uint8_t &buffer, int &bitsWritten) {
 	}
 }
 
-int writeTextToFile(uint8_t *text, size_t size, Data &c) {
+int writeTextToFile(uint8_t *text, size_t size, HuffmanDict &c) {
 	char nameFile[100];
 	std::cout << "\nWrite the name for the compressed file\n" << std::endl;
 	std::cin >> nameFile;
@@ -187,8 +190,8 @@ int writeTextToFile(uint8_t *text, size_t size, Data &c) {
 
 	for (size_t j = 0; j < size; j++) {
 		// Записывем коды Хаффмана в двоичном виде
-		for (int i = 0; c.huffmanCode[text[j]][i] != '\0'; ++i) {
-			uint8_t bit = c.huffmanCode[text[j]][i];
+		for (int i = 0; c.huffmanCodes[text[j]][i] != '\0'; ++i) {
+			uint8_t bit = c.huffmanCodes[text[j]][i];
 			writeBit(newfile, bit, buffer, bitsWritten);
 		}
 	}
@@ -238,21 +241,22 @@ uint8_t *readTextFromFile(size_t *size) {
 }
 
 void huffman(uint8_t *text, size_t size) {
-	Data c;
-
 	assert(text && size);
+
+	HuffmanDict huffmanDict;
+	FrequencyDict freqDict = {0};
 
 	// Count the frequencies
 	for (size_t i = 0; i < size; i++) {
-		c.ascii[text[i]]++;
+		freqDict[text[i]]++;
 	}
 
 	// Linked list for the sorted nodes
 	ListNode *listHead = nullptr;
 
 	for (int i = 0; i < 256; i++) {
-		if (c.ascii[i] > 0) {
-			ListNode *newNode = new ListNode(i, c.ascii[i]);
+		if (freqDict[i] > 0) {
+			ListNode *newNode = new ListNode(i, freqDict[i]);
 			listHead = listHead->insertSorted(newNode);
 		}
 	}
@@ -286,14 +290,14 @@ void huffman(uint8_t *text, size_t size) {
 	// Codes buffer
 	char code[256];
 
-	treeRoot->encode(code, 0, c);
+	treeRoot->encode(code, 0, huffmanDict);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
-	writeTextToFile(text, size, c);
+	writeTextToFile(text, size, huffmanDict);
 	std::cout << "\nThe coding string is:\n";
 	for (size_t i = 0; i < size; i++) {
 		//  Вывод кодов
-		std::cout << c.huffmanCode[text[i]] << " ";
+		std::cout << huffmanDict.huffmanCodes[text[i]] << " ";
 	}
 	std::cout << std::endl;
 
