@@ -91,7 +91,18 @@ class VitterTreeNode {
 
 	void swap_with(VitterTreeNode *other);
 
-	VitterTreeNode *walk(std::function<bool(VitterTreeNode *)> func);
+	VitterTreeNode *
+	walk_extended(std::function<bool(VitterTreeNode *)> matches,
+		      std::function<void(VitterTreeNode *)> before_left_child,
+		      std::function<void(VitterTreeNode *)> after_left_child,
+		      std::function<void(VitterTreeNode *)> before_right_child,
+		      std::function<void(VitterTreeNode *)> after_right_child);
+
+	VitterTreeNode *walk(std::function<bool(VitterTreeNode *)> matches) {
+		return this->walk_extended(
+			matches, [](auto) {}, [](auto) {}, [](auto) {},
+			[](auto) {});
+	};
 
 	VitterTreeNode(bool NYT) : not_yet_transferred(NYT) {
 	}
@@ -144,23 +155,36 @@ void VitterTreeNode::swap_with(VitterTreeNode *other) {
 	this->left = tmp;
 }
 
-VitterTreeNode *
-VitterTreeNode::walk(std::function<bool(VitterTreeNode *)> func) {
+VitterTreeNode *VitterTreeNode::walk_extended(
+	std::function<bool(VitterTreeNode *)> matches,
+	std::function<void(VitterTreeNode *)> before_left_child,
+	std::function<void(VitterTreeNode *)> after_left_child,
+	std::function<void(VitterTreeNode *)> before_right_child,
+	std::function<void(VitterTreeNode *)> after_right_child) {
+
 	VitterTreeNode *ret;
 
 	if (this->left) {
-		ret = this->left->walk(func);
+		before_left_child(this);
+		ret = this->left->walk_extended(
+			matches, before_left_child, after_left_child,
+			before_right_child, after_right_child);
+		after_right_child(this);
 		if (ret) {
 			return ret;
 		}
 	}
 
-	if (func(this)) {
+	if (matches(this)) {
 		return this;
 	};
 
 	if (this->right) {
-		ret = this->right->walk(func);
+		before_right_child(this);
+		ret = this->right->walk_extended(
+			matches, before_left_child, after_left_child,
+			before_right_child, after_right_child);
+		after_right_child(this);
 		if (ret) {
 			return ret;
 		}
