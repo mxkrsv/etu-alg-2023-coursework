@@ -208,8 +208,8 @@ class BitList {
 
 class VitterTree {
 	public:
-	VitterTreeNode *search(char symbol);
-	VitterTreeNode *search(uint8_t number);
+	VitterTreeNode *search_symbol(char symbol);
+	VitterTreeNode *search_number(uint8_t number);
 
 	VitterTreeNode *find_block_leader(VitterTreeNode *block_entry);
 
@@ -226,13 +226,13 @@ class VitterTree {
 	VitterTreeNode *NYT;
 };
 
-VitterTreeNode *VitterTree::search(char symbol) {
+VitterTreeNode *VitterTree::search_symbol(char symbol) {
 	return this->root->walk([symbol](VitterTreeNode *node) -> bool {
 		return node->is_symb() && node->get_symbol() == symbol;
 	});
 }
 
-VitterTreeNode *VitterTree::search(uint8_t number) {
+VitterTreeNode *VitterTree::search_number(uint8_t number) {
 	return this->root->walk([number](VitterTreeNode *node) -> bool {
 		return node->get_number() == number;
 	});
@@ -243,7 +243,7 @@ VitterTreeNode *VitterTree::find_block_leader(VitterTreeNode *block_entry) {
 	VitterTreeNode *result = block_entry;
 
 	for (uint8_t i = block_entry->get_number(); i != 0; i++) {
-		VitterTreeNode *current = this->search(i);
+		VitterTreeNode *current = this->search_number(i);
 		assert(current);
 
 		if (block_entry->of_the_same_kind(result) &&
@@ -257,7 +257,7 @@ VitterTreeNode *VitterTree::find_block_leader(VitterTreeNode *block_entry) {
 
 // TODO: verify (source: Russian Wikipedia)
 void VitterTree::insert(char symbol) {
-	VitterTreeNode *search_result = this->search(symbol);
+	VitterTreeNode *search_result = this->search_symbol(symbol);
 
 	if (!search_result) {
 		this->NYT->unset_NYT();
