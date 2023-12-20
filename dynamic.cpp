@@ -169,6 +169,43 @@ VitterTreeNode::walk(std::function<bool(VitterTreeNode *)> func) {
 	return nullptr;
 }
 
+class BitList {
+	public:
+	size_t get_length() {
+		return this->length;
+	}
+
+	void push_back(bool bit) {
+		assert(this->length < this->capacity);
+
+		if (bit) {
+			// Set bit
+			this->list |= (1U << (8 - length - 1));
+		} else {
+			// Unset bit
+			this->list &= ~(1U << (8 - length - 1));
+		}
+
+		this->length++;
+	}
+
+	bool operator[](size_t idx) {
+		assert(idx < length);
+		return ((this->list << idx) >> (this->capacity - 1));
+	}
+
+	// XXX: only one-byte cap is supported
+	BitList(size_t capacity) {
+		assert(capacity == 8);
+		this->capacity = capacity;
+	}
+
+	private:
+	uint8_t list;
+	size_t length;
+	size_t capacity;
+};
+
 class VitterTree {
 	public:
 	VitterTreeNode *search(char symbol);
