@@ -211,8 +211,6 @@ class VitterTree {
 	VitterTreeNode *search_symbol(char symbol);
 	VitterTreeNode *search_number(uint8_t number);
 
-	VitterTreeNode *find_block_leader(VitterTreeNode *block_entry);
-
 	void insert(char);
 
 	VitterTree() {
@@ -224,6 +222,8 @@ class VitterTree {
 	VitterTreeNode *root;
 
 	VitterTreeNode *NYT;
+
+	VitterTreeNode *find_block_leader(VitterTreeNode *block_entry);
 };
 
 VitterTreeNode *VitterTree::search_symbol(char symbol) {
