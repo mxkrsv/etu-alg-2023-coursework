@@ -189,6 +189,10 @@ class BitList {
 		this->length++;
 	}
 
+	void pop_back() {
+		this->length--;
+	}
+
 	bool operator[](size_t idx) {
 		assert(idx < length);
 		return ((this->list << idx) >> (this->capacity - 1));
