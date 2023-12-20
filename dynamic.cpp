@@ -241,6 +241,8 @@ class VitterTree {
 
 	void insert(char);
 
+	BitList get_huffman_code(char symbol);
+
 	VitterTree() {
 		root = new VitterTreeNode(true);
 		NYT = root;
@@ -264,6 +266,26 @@ VitterTreeNode *VitterTree::search_number(uint8_t number) {
 	return this->root->walk([number](VitterTreeNode *node) -> bool {
 		return node->get_number() == number;
 	});
+}
+
+// TODO: very ineffective because it's called every single time
+BitList VitterTree::get_huffman_code(char symbol) {
+	BitList huffman_code(8);
+
+	this->root->walk_extended(
+		[symbol](VitterTreeNode *node) -> bool {
+			if (node->is_leaf()) {
+				return node->get_symbol() == symbol;
+			}
+
+			return false;
+		},
+		[&huffman_code](auto) { huffman_code.push_back(false); },
+		[&huffman_code](auto) { huffman_code.pop_back(); },
+		[&huffman_code](auto) { huffman_code.push_back(true); },
+		[&huffman_code](auto) { huffman_code.pop_back(); });
+
+	return huffman_code;
 }
 
 // TODO: ineffective
