@@ -67,10 +67,6 @@ class VitterTreeNode {
 		return this->parent;
 	}
 
-	// void set_number(uint8_t number) {
-	//	this->number = number;
-	// }
-
 	void set_left_child(VitterTreeNode *child) {
 		assert(!this->is_NYT());
 
@@ -93,35 +89,7 @@ class VitterTreeNode {
 		return this->parent == parent;
 	}
 
-	void swap_with(VitterTreeNode *other) {
-		if (this->parent) {
-			if (this->parent->left == this) {
-				this->parent->left = other;
-			} else {
-				this->parent->right = other;
-			}
-		}
-
-		if (other->parent) {
-			if (other->parent->left == other) {
-				other->parent->left = this;
-			} else {
-				other->parent->right = this;
-			}
-		}
-
-		VitterTreeNode *tmp = other->parent;
-		other->parent = this->parent;
-		this->parent = tmp;
-
-		tmp = other->right;
-		other->right = this->right;
-		this->right = tmp;
-
-		tmp = other->left;
-		other->left = this->left;
-		this->left = tmp;
-	}
+	void swap_with(VitterTreeNode *other);
 
 	VitterTreeNode *walk(std::function<bool(VitterTreeNode *)> func);
 
@@ -145,6 +113,36 @@ class VitterTreeNode {
 	bool not_yet_transferred;
 	bool is_symbol;
 };
+
+void VitterTreeNode::swap_with(VitterTreeNode *other) {
+	if (this->parent) {
+		if (this->parent->left == this) {
+			this->parent->left = other;
+		} else {
+			this->parent->right = other;
+		}
+	}
+
+	if (other->parent) {
+		if (other->parent->left == other) {
+			other->parent->left = this;
+		} else {
+			other->parent->right = this;
+		}
+	}
+
+	VitterTreeNode *tmp = other->parent;
+	other->parent = this->parent;
+	this->parent = tmp;
+
+	tmp = other->right;
+	other->right = this->right;
+	this->right = tmp;
+
+	tmp = other->left;
+	other->left = this->left;
+	this->left = tmp;
+}
 
 VitterTreeNode *
 VitterTreeNode::walk(std::function<bool(VitterTreeNode *)> func) {
