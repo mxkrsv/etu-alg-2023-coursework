@@ -382,7 +382,26 @@ void VitterTree::insert(char symbol) {
 }
 
 // TODO: implement building the code itself
-static int dynamicHuffmanFilter(FILE *input_file, FILE *output_file) {
+static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
+	VitterTree vitter_tree;
+
+	int symbol;
+	while ((symbol = fgetc(input_file)) != EOF) {
+		vitter_tree.insert((char)symbol);
+
+		BitList huffman_code = vitter_tree.get_huffman_code(symbol);
+
+		char *huffman_code_str = huffman_code.get_string();
+		printf("%hhd: %s (length %zu)\n", (char)symbol,
+		       huffman_code_str, huffman_code.get_length());
+		free(huffman_code_str);
+	}
+
+	if (!feof(input_file)) {
+		perror("fgetc");
+		return EXIT_FAILURE;
+	}
+
 	return EXIT_SUCCESS;
 }
 
@@ -430,5 +449,5 @@ int main(int argc, char *argv[]) {
 		perror("fopen");
 	}
 
-	return dynamicHuffmanFilter(input_file, output_file);
+	return dynamic_huffman_filter(input_file, output_file);
 }
