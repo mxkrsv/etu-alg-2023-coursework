@@ -293,7 +293,7 @@ class BitList {
 		return this->list[idx];
 	}
 
-	void operator=(BitList other) {
+	BitList &operator=(const BitList &other) {
 		assert(this->list);
 		free(this->list);
 
@@ -303,6 +303,8 @@ class BitList {
 		memcpy(this->list, other.list, other.length * sizeof(bool));
 		this->length = other.length;
 		this->capacity = other.capacity;
+
+		return *this;
 	}
 
 	char *get_string() {
@@ -321,7 +323,7 @@ class BitList {
 		assert(this->list);
 	}
 
-	BitList(BitList &other) {
+	BitList(const BitList &other) {
 		this->list = (bool *)malloc(sizeof(bool) * other.capacity);
 		assert(this->list);
 
