@@ -5,7 +5,7 @@
 #include <functional>
 #include <unistd.h>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define DPRINTF(...) fprintf(stderr, __VA_ARGS__)
