@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <unistd.h>
 
@@ -292,6 +293,18 @@ class BitList {
 		return this->list[idx];
 	}
 
+	void operator=(BitList other) {
+		assert(this->list);
+		free(this->list);
+
+		this->list = (bool *)malloc(sizeof(bool) * other.capacity);
+		assert(this->list);
+
+		memcpy(this->list, other.list, other.length * sizeof(bool));
+		this->length = other.length;
+		this->capacity = other.capacity;
+	}
+
 	char *get_string() {
 		char *ret = (char *)malloc(sizeof(char) * (this->length + 1));
 
@@ -306,6 +319,15 @@ class BitList {
 	BitList() : length(0), capacity(8) {
 		this->list = (bool *)malloc(sizeof(bool) * 8);
 		assert(this->list);
+	}
+
+	BitList(BitList &other) {
+		this->list = (bool *)malloc(sizeof(bool) * other.capacity);
+		assert(this->list);
+
+		memcpy(this->list, other.list, other.length * sizeof(bool));
+		this->length = other.length;
+		this->capacity = other.capacity;
 	}
 
 	~BitList() {
@@ -328,9 +350,12 @@ class VitterTree {
 	BitList
 	get_huffman_code(std::function<bool(VitterTreeNode *)> match_fn);
 	BitList get_huffman_code_for_char(char symbol);
-	BitList get_huffman_code_for_NYT();
 
-	VitterTree() {
+	BitList get_prev_NYT_code() {
+		return this->prev_NYT_code;
+	};
+
+	VitterTree() : prev_NYT_code() {
 		root = new VitterTreeNode(true);
 		NYT = root;
 	}
@@ -341,10 +366,11 @@ class VitterTree {
 
 	private:
 	VitterTreeNode *root;
-
 	VitterTreeNode *NYT;
+	BitList prev_NYT_code;
 
 	VitterTreeNode *find_block_leader(VitterTreeNode *block_entry);
+	BitList get_huffman_code_for_NYT();
 };
 
 VitterTreeNode *VitterTree::search_symbol(char symbol) {
@@ -433,6 +459,9 @@ bool VitterTree::insert(char symbol) {
 	VitterTreeNode *current = nullptr;
 	bool was_new = false;
 	if (!search_result) {
+		this->prev_NYT_code = this->get_huffman_code_for_NYT();
+		was_new = true;
+
 		this->NYT->unset_NYT();
 
 		VitterTreeNode *new_NYT = new VitterTreeNode(true);
@@ -443,7 +472,6 @@ bool VitterTree::insert(char symbol) {
 
 		DPRINTF("insert: the new node was NYT, assigned number: %hhu\n",
 			symbol_node->get_number());
-		was_new = true;
 
 		symbol_node->inc_weight();
 		// this->NYT->inc_weight();
@@ -497,13 +525,24 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	while ((symbol = fgetc(input_file)) != EOF) {
 		bool was_new = vitter_tree.insert((char)symbol);
 
-		BitList huffman_code =
-			vitter_tree.get_huffman_code_for_char(symbol);
+		if (was_new) {
+			BitList NYT_code = vitter_tree.get_prev_NYT_code();
 
-		char *huffman_code_str = huffman_code.get_string();
-		printf("%hhd: %s (length %zu)\n", (char)symbol,
-		       huffman_code_str, huffman_code.get_length());
-		free(huffman_code_str);
+			char *NYT_code_str = NYT_code.get_string();
+			printf("new symbol %hhd: NYT code %s (length %zu)\n",
+			       (char)symbol, NYT_code_str,
+			       NYT_code.get_length());
+			free(NYT_code_str);
+		} else {
+			BitList huffman_code =
+				vitter_tree.get_huffman_code_for_char(symbol);
+
+			char *huffman_code_str = huffman_code.get_string();
+			printf("old symbol %hhd: %s (length %zu)\n",
+			       (char)symbol, huffman_code_str,
+			       huffman_code.get_length());
+			free(huffman_code_str);
+		}
 	}
 
 	if (!feof(input_file)) {
