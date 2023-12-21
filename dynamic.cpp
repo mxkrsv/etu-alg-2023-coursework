@@ -104,10 +104,16 @@ class VitterTreeNode {
 			[](auto) {});
 	};
 
-	VitterTreeNode(bool NYT) : not_yet_transferred(NYT) {
+	VitterTreeNode(bool NYT)
+	    : left(nullptr), right(nullptr), parent(nullptr), symbol(0),
+	      weight(0), number(UINT8_MAX), not_yet_transferred(NYT),
+	      is_symbol(false) {
 	}
 
-	VitterTreeNode(char symbol) : symbol(symbol), is_symbol(true) {
+	VitterTreeNode(char symbol)
+	    : left(nullptr), right(nullptr), parent(nullptr), symbol(symbol),
+	      weight(0), number(0), not_yet_transferred(false),
+	      is_symbol(true) {
 	}
 
 	private:
@@ -169,10 +175,10 @@ VitterTreeNode *VitterTreeNode::walk_extended(
 		ret = this->left->walk_extended(
 			matches, before_left_child, after_left_child,
 			before_right_child, after_right_child);
-		after_right_child(this);
 		if (ret) {
 			return ret;
 		}
+		after_left_child(this);
 	}
 
 	if (matches(this)) {
@@ -184,10 +190,10 @@ VitterTreeNode *VitterTreeNode::walk_extended(
 		ret = this->right->walk_extended(
 			matches, before_left_child, after_left_child,
 			before_right_child, after_right_child);
-		after_right_child(this);
 		if (ret) {
 			return ret;
 		}
+		after_right_child(this);
 	}
 
 	return nullptr;
@@ -223,9 +229,8 @@ class BitList {
 	}
 
 	// XXX: only one-byte cap is supported
-	BitList(size_t capacity) {
+	BitList(size_t capacity) : list(0), length(0), capacity(capacity) {
 		assert(capacity == 8);
-		this->capacity = capacity;
 	}
 
 	private:
@@ -331,6 +336,7 @@ void VitterTree::insert(char symbol) {
 			if (current != block_leader) {
 				if (!current->is_child_of(block_leader)) {
 					current->swap_with(block_leader);
+					current = block_leader;
 				}
 			}
 
