@@ -118,6 +118,15 @@ class VitterTreeNode {
 	      is_symbol(true) {
 	}
 
+	~VitterTreeNode() {
+		if (this->left) {
+			delete this->left;
+		}
+		if (this->right) {
+			delete this->right;
+		}
+	}
+
 	private:
 	VitterTreeNode *left;
 	VitterTreeNode *right;
@@ -298,6 +307,10 @@ class BitList {
 		assert(this->list);
 	}
 
+	~BitList() {
+		free(list);
+	}
+
 	private:
 	bool *list;
 	size_t length;
@@ -316,6 +329,10 @@ class VitterTree {
 	VitterTree() {
 		root = new VitterTreeNode(true);
 		NYT = root;
+	}
+
+	~VitterTree() {
+		delete root;
 	}
 
 	private:
