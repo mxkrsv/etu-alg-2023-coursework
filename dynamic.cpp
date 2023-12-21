@@ -161,6 +161,10 @@ void VitterTreeNode::swap_with(VitterTreeNode *other) {
 	tmp = other->left;
 	other->left = this->left;
 	this->left = tmp;
+
+	uint8_t tmp_number = other->number;
+	other->number = this->number;
+	this->number = tmp_number;
 }
 
 VitterTreeNode *VitterTreeNode::walk_extended(
@@ -331,7 +335,7 @@ VitterTreeNode *VitterTree::find_block_leader(VitterTreeNode *block_entry) {
 		VitterTreeNode *current = this->search_number(i);
 		assert(current);
 
-		if (block_entry->of_the_same_kind(result) &&
+		if (current->of_the_same_kind(block_entry) &&
 		    current->get_weight() == block_entry->get_weight()) {
 			result = current;
 		}
@@ -344,6 +348,7 @@ VitterTreeNode *VitterTree::find_block_leader(VitterTreeNode *block_entry) {
 void VitterTree::insert(char symbol) {
 	VitterTreeNode *search_result = this->search_symbol(symbol);
 
+	VitterTreeNode *current = nullptr;
 	if (!search_result) {
 		this->NYT->unset_NYT();
 
@@ -353,31 +358,48 @@ void VitterTree::insert(char symbol) {
 		this->NYT->set_left_child(new_NYT);
 		this->NYT->set_right_child(symbol_node);
 
+		DPRINTF("insert: the new node was NYT, assigned number: %hhu\n",
+			symbol_node->get_number());
+
 		symbol_node->inc_weight();
-		this->NYT->inc_weight();
+		// this->NYT->inc_weight();
 
 		this->NYT = new_NYT;
+
+		current = symbol_node->get_parent();
 	} else {
-		VitterTreeNode *current = search_result;
+		DPRINTF("insert: the new node is already present (%hhu)\n",
+			search_result->get_number());
+		current = search_result;
+	}
 
-		while (true) {
-			VitterTreeNode *block_leader =
-				this->find_block_leader(current);
-			if (current != block_leader) {
-				if (!current->is_child_of(block_leader)) {
-					current->swap_with(block_leader);
-					current = block_leader;
-				}
+	while (true) {
+		DPRINTF("insert: rebalancing above\n");
+		VitterTreeNode *block_leader = this->find_block_leader(current);
+		if (current != block_leader) {
+			if (!current->is_child_of(block_leader)) {
+				DPRINTF("insert: exchanging with the block "
+					"leader (%hhu <-> %hhu)\n",
+					current->get_number(),
+					block_leader->get_number());
+				current->swap_with(block_leader);
+				// current = block_leader;
+			} else {
+				DPRINTF("insert: is the child of the block "
+					"leader (%hhu), not exchanging\n",
+					block_leader->get_number());
 			}
-
-			current->inc_weight();
-
-			if (current->is_root()) {
-				break;
-			}
-
-			current = current->get_parent();
+		} else {
+			DPRINTF("insert: already the block leader\n");
 		}
+
+		current->inc_weight();
+
+		if (current->is_root()) {
+			break;
+		}
+
+		current = current->get_parent();
 	}
 }
 
