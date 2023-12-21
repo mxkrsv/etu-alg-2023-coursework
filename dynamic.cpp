@@ -519,6 +519,49 @@ bool VitterTree::insert(char symbol) {
 	return was_new;
 }
 
+class FileBitWriter {
+	public:
+	void add(BitList bits);
+	void flush();
+
+	FileBitWriter(FILE *file) : buffer(0), count(0) {
+		assert(file);
+		this->file = file;
+	};
+
+	private:
+	FILE *file;
+	uint8_t buffer;
+	size_t count;
+
+	void add_bit(bool bit);
+};
+
+void FileBitWriter::add(BitList bits) {
+	for (size_t i = 0; i < bits.get_length(); i++) {
+		this->add_bit(bits[i]);
+	}
+}
+
+void FileBitWriter::add_bit(bool bit) {
+	this->buffer <<= 1;
+	if (bit) {
+		this->buffer |= 1U;
+	}
+	this->count++;
+
+	if (this->count == 8) {
+		this->flush();
+	}
+}
+
+void FileBitWriter::flush() {
+	this->buffer <<= (8 - this->count);
+	fwrite(&this->buffer, sizeof(bool), 1, this->file);
+	this->buffer = 0;
+	this->count = 0;
+}
+
 // TODO: implement building the code itself
 static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	VitterTree vitter_tree;
