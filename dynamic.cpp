@@ -332,6 +332,14 @@ class BitList {
 		this->capacity = other.capacity;
 	}
 
+	BitList(uint8_t symbol) : BitList() {
+		for (size_t i = 0; i < 8; i++) {
+			this->push_back(symbol & (1U << (8 - i - 1)));
+		}
+
+		assert(this->length == 8);
+	}
+
 	~BitList() {
 		free(list);
 	}
