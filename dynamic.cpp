@@ -365,7 +365,11 @@ class VitterTree {
 		return this->prev_NYT_code;
 	};
 
-	VitterTree() : prev_NYT_code() {
+	BitList get_prev_symbol_code() {
+		return this->prev_symbol_code;
+	};
+
+	VitterTree() : prev_NYT_code(), prev_symbol_code() {
 		root = new VitterTreeNode(true);
 		NYT = root;
 	}
@@ -378,6 +382,7 @@ class VitterTree {
 	VitterTreeNode *root;
 	VitterTreeNode *NYT;
 	BitList prev_NYT_code;
+	BitList prev_symbol_code;
 
 	VitterTreeNode *find_block_leader(VitterTreeNode *block_entry);
 	BitList get_huffman_code_for_NYT();
@@ -492,6 +497,10 @@ bool VitterTree::insert(char symbol) {
 	} else {
 		DPRINTF("insert: the new node is already present (%hhu)\n",
 			search_result->get_number());
+
+		this->prev_symbol_code =
+			this->get_huffman_code_for_char(symbol);
+
 		current = search_result;
 	}
 
@@ -570,9 +579,11 @@ void FileBitWriter::flush() {
 	this->count = 0;
 }
 
-// TODO: implement building the code itself
+// TODO: investigate bad compression ratio
 static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	VitterTree vitter_tree;
+
+	FileBitWriter archive_writer = FileBitWriter(output_file);
 
 	int symbol;
 	while ((symbol = fgetc(input_file)) != EOF) {
@@ -581,20 +592,30 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 		if (was_new) {
 			BitList NYT_code = vitter_tree.get_prev_NYT_code();
 
+#ifdef DEBUG
 			char *NYT_code_str = NYT_code.get_string();
-			printf("new symbol %hhd: NYT code %s (length %zu)\n",
-			       (char)symbol, NYT_code_str,
-			       NYT_code.get_length());
+			DPRINTF("new symbol %hhd: NYT code %s (length %zu)\n",
+				(char)symbol, NYT_code_str,
+				NYT_code.get_length());
 			free(NYT_code_str);
+#endif
+
+			archive_writer.add(NYT_code);
+
+			archive_writer.add(BitList(char(symbol)));
 		} else {
 			BitList huffman_code =
-				vitter_tree.get_huffman_code_for_char(symbol);
+				vitter_tree.get_prev_symbol_code();
 
+#ifdef DEBUG
 			char *huffman_code_str = huffman_code.get_string();
-			printf("old symbol %hhd: %s (length %zu)\n",
-			       (char)symbol, huffman_code_str,
-			       huffman_code.get_length());
+			DPRINTF("old symbol %hhd: %s (length %zu)\n",
+				(char)symbol, huffman_code_str,
+				huffman_code.get_length());
 			free(huffman_code_str);
+#endif
+
+			archive_writer.add(huffman_code);
 		}
 	}
 
@@ -602,6 +623,8 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 		perror("fgetc");
 		return EXIT_FAILURE;
 	}
+
+	archive_writer.flush();
 
 	return EXIT_SUCCESS;
 }
