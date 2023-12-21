@@ -205,7 +205,7 @@ VitterTreeNode *VitterTreeNode::walk_extended(
 	return nullptr;
 }
 
-class BitList {
+class FixedBitList {
 	public:
 	size_t get_length() {
 		return this->length;
@@ -244,7 +244,7 @@ class BitList {
 	}
 
 	// XXX: only one-byte cap is supported
-	BitList(size_t capacity) : list(0), length(0), capacity(capacity) {
+	FixedBitList(size_t capacity) : list(0), length(0), capacity(capacity) {
 		assert(capacity == 8);
 	}
 
@@ -261,7 +261,7 @@ class VitterTree {
 
 	void insert(char);
 
-	BitList get_huffman_code(char symbol);
+	FixedBitList get_huffman_code(char symbol);
 
 	VitterTree() {
 		root = new VitterTreeNode(true);
@@ -292,8 +292,8 @@ VitterTreeNode *VitterTree::search_number(uint8_t number) {
 }
 
 // TODO: very ineffective because it's called every single time
-BitList VitterTree::get_huffman_code(char symbol) {
-	BitList huffman_code(8);
+FixedBitList VitterTree::get_huffman_code(char symbol) {
+	FixedBitList huffman_code(8);
 
 	this->root->walk_extended(
 		[symbol](VitterTreeNode *node) -> bool {
@@ -411,7 +411,7 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	while ((symbol = fgetc(input_file)) != EOF) {
 		vitter_tree.insert((char)symbol);
 
-		BitList huffman_code = vitter_tree.get_huffman_code(symbol);
+		FixedBitList huffman_code = vitter_tree.get_huffman_code(symbol);
 
 		char *huffman_code_str = huffman_code.get_string();
 		printf("%hhd: %s (length %zu)\n", (char)symbol,
