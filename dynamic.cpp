@@ -230,6 +230,15 @@ class BitList {
 		return ((this->list << idx) >> (this->capacity - 1));
 	}
 
+	char *get_string() {
+		char *ret;
+
+		asprintf(&ret, "%.*b", (int)this->length,
+			 this->list >> (this->capacity - this->length));
+
+		return ret;
+	}
+
 	// XXX: only one-byte cap is supported
 	BitList(size_t capacity) : list(0), length(0), capacity(capacity) {
 		assert(capacity == 8);
