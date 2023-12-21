@@ -205,6 +205,7 @@ VitterTreeNode *VitterTreeNode::walk_extended(
 	return nullptr;
 }
 
+/*
 class FixedBitList {
 	public:
 	size_t get_length() {
@@ -253,6 +254,55 @@ class FixedBitList {
 	size_t length;
 	size_t capacity;
 };
+*/
+
+class BitList {
+	public:
+	size_t get_length() {
+		return this->length;
+	}
+
+	void push_back(bool bit) {
+		if (length == capacity) {
+			this->list = (bool *)reallocarray(
+				this->list, this->capacity * 2, sizeof(bool));
+		}
+
+		this->length++;
+		this->list[this->length - 1] = bit;
+	}
+
+	void pop_back() {
+		this->length--;
+	};
+
+	bool operator[](size_t idx) {
+		assert(idx < length);
+
+		return this->list[idx];
+	}
+
+	char *get_string() {
+		char *ret = (char *)malloc(sizeof(char) * (this->length + 1));
+
+		for (size_t i = 0; i < length; i++) {
+			ret[i] = list[i] ? '1' : '0';
+		}
+		ret[this->length] = '\0';
+
+		return ret;
+	}
+
+	BitList() : length(0), capacity(8) {
+		this->list = (bool *)malloc(sizeof(bool) * 8);
+		assert(this->list);
+	}
+
+	private:
+	bool *list;
+	size_t length;
+	size_t capacity;
+};
 
 class VitterTree {
 	public:
@@ -261,7 +311,7 @@ class VitterTree {
 
 	void insert(char);
 
-	FixedBitList get_huffman_code(char symbol);
+	BitList get_huffman_code(char symbol);
 
 	VitterTree() {
 		root = new VitterTreeNode(true);
@@ -292,8 +342,8 @@ VitterTreeNode *VitterTree::search_number(uint8_t number) {
 }
 
 // TODO: very ineffective because it's called every single time
-FixedBitList VitterTree::get_huffman_code(char symbol) {
-	FixedBitList huffman_code(8);
+BitList VitterTree::get_huffman_code(char symbol) {
+	BitList huffman_code;
 
 	this->root->walk_extended(
 		[symbol](VitterTreeNode *node) -> bool {
@@ -411,7 +461,7 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	while ((symbol = fgetc(input_file)) != EOF) {
 		vitter_tree.insert((char)symbol);
 
-		FixedBitList huffman_code = vitter_tree.get_huffman_code(symbol);
+		BitList huffman_code = vitter_tree.get_huffman_code(symbol);
 
 		char *huffman_code_str = huffman_code.get_string();
 		printf("%hhd: %s (length %zu)\n", (char)symbol,
