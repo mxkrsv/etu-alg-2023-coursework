@@ -56,6 +56,8 @@ class VitterTreeNode {
 	}
 
 	void inc_weight() {
+		DPRINTF("inc_weight: %hhd = %zu\n", this->symbol,
+			this->weight + 1);
 		this->weight++;
 	}
 
@@ -263,6 +265,9 @@ class VitterTree {
 
 VitterTreeNode *VitterTree::search_symbol(char symbol) {
 	return this->root->walk([symbol](VitterTreeNode *node) -> bool {
+		DPRINTF("search_symbol(%d, %d) = %d\n",
+			node->is_symb() ? node->get_symbol() : -1, symbol,
+			node->is_symb() && node->get_symbol() == symbol);
 		return node->is_symb() && node->get_symbol() == symbol;
 	});
 }
@@ -279,16 +284,32 @@ BitList VitterTree::get_huffman_code(char symbol) {
 
 	this->root->walk_extended(
 		[symbol](VitterTreeNode *node) -> bool {
-			if (node->is_leaf()) {
+			if (node->is_symb()) {
+				DPRINTF("get_huffman_code: matches(%d, %d) = "
+					"%d\n",
+					node->get_symbol(), symbol,
+					node->get_symbol() == symbol);
 				return node->get_symbol() == symbol;
 			}
 
 			return false;
 		},
-		[&huffman_code](auto) { huffman_code.push_back(false); },
-		[&huffman_code](auto) { huffman_code.pop_back(); },
-		[&huffman_code](auto) { huffman_code.push_back(true); },
-		[&huffman_code](auto) { huffman_code.pop_back(); });
+		[&huffman_code](auto) {
+			DPRINTF("get_huffman_code: pushed false\n");
+			huffman_code.push_back(false);
+		},
+		[&huffman_code](auto) {
+			DPRINTF("get_huffman_code: popped\n");
+			huffman_code.pop_back();
+		},
+		[&huffman_code](auto) {
+			DPRINTF("get_huffman_code: pushed true\n");
+			huffman_code.push_back(true);
+		},
+		[&huffman_code](auto) {
+			DPRINTF("get_huffman_code: popped\n");
+			huffman_code.pop_back();
+		});
 
 	return huffman_code;
 }
