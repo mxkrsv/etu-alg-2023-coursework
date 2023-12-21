@@ -323,7 +323,7 @@ class VitterTree {
 	VitterTreeNode *search_symbol(char symbol);
 	VitterTreeNode *search_number(uint8_t number);
 
-	void insert(char);
+	bool insert(char);
 
 	BitList get_huffman_code(char symbol);
 
@@ -413,10 +413,12 @@ VitterTreeNode *VitterTree::find_block_leader(VitterTreeNode *block_entry) {
 }
 
 // TODO: verify (source: Russian Wikipedia)
-void VitterTree::insert(char symbol) {
+// true -> inserted new, false -> was already present
+bool VitterTree::insert(char symbol) {
 	VitterTreeNode *search_result = this->search_symbol(symbol);
 
 	VitterTreeNode *current = nullptr;
+	bool was_new = false;
 	if (!search_result) {
 		this->NYT->unset_NYT();
 
@@ -428,6 +430,7 @@ void VitterTree::insert(char symbol) {
 
 		DPRINTF("insert: the new node was NYT, assigned number: %hhu\n",
 			symbol_node->get_number());
+		was_new = true;
 
 		symbol_node->inc_weight();
 		// this->NYT->inc_weight();
@@ -469,6 +472,8 @@ void VitterTree::insert(char symbol) {
 
 		current = current->get_parent();
 	}
+
+	return was_new;
 }
 
 // TODO: implement building the code itself
@@ -477,7 +482,7 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 
 	int symbol;
 	while ((symbol = fgetc(input_file)) != EOF) {
-		vitter_tree.insert((char)symbol);
+		bool was_new = vitter_tree.insert((char)symbol);
 
 		BitList huffman_code = vitter_tree.get_huffman_code(symbol);
 
