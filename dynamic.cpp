@@ -325,7 +325,10 @@ class VitterTree {
 
 	bool insert(char);
 
-	BitList get_huffman_code(char symbol);
+	BitList
+	get_huffman_code(std::function<bool(VitterTreeNode *)> match_fn);
+	BitList get_huffman_code_for_char(char symbol);
+	BitList get_huffman_code_for_NYT();
 
 	VitterTree() {
 		root = new VitterTreeNode(true);
@@ -360,21 +363,12 @@ VitterTreeNode *VitterTree::search_number(uint8_t number) {
 }
 
 // TODO: very ineffective because it's called every single time
-BitList VitterTree::get_huffman_code(char symbol) {
+BitList
+VitterTree::get_huffman_code(std::function<bool(VitterTreeNode *)> match_fn) {
 	BitList huffman_code;
 
 	this->root->walk_extended(
-		[symbol](VitterTreeNode *node) -> bool {
-			if (node->is_symb()) {
-				DPRINTF("get_huffman_code: matches(%d, %d) = "
-					"%d\n",
-					node->get_symbol(), symbol,
-					node->get_symbol() == symbol);
-				return node->get_symbol() == symbol;
-			}
-
-			return false;
-		},
+		match_fn,
 		[&huffman_code](auto) {
 			DPRINTF("get_huffman_code: pushed false\n");
 			huffman_code.push_back(false);
@@ -393,6 +387,25 @@ BitList VitterTree::get_huffman_code(char symbol) {
 		});
 
 	return huffman_code;
+}
+
+BitList VitterTree::get_huffman_code_for_char(char symbol) {
+	return this->get_huffman_code([symbol](VitterTreeNode *node) -> bool {
+		if (node->is_symb()) {
+			DPRINTF("get_huffman_code_for_char: matches(%d, %d) = "
+				"%d\n",
+				node->get_symbol(), symbol,
+				node->get_symbol() == symbol);
+			return node->get_symbol() == symbol;
+		}
+
+		return false;
+	});
+}
+
+BitList VitterTree::get_huffman_code_for_NYT() {
+	return this->get_huffman_code(
+		[](VitterTreeNode *node) -> bool { return node->is_NYT(); });
 }
 
 // TODO: ineffective
@@ -484,7 +497,8 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	while ((symbol = fgetc(input_file)) != EOF) {
 		bool was_new = vitter_tree.insert((char)symbol);
 
-		BitList huffman_code = vitter_tree.get_huffman_code(symbol);
+		BitList huffman_code =
+			vitter_tree.get_huffman_code_for_char(symbol);
 
 		char *huffman_code_str = huffman_code.get_string();
 		printf("%hhd: %s (length %zu)\n", (char)symbol,
