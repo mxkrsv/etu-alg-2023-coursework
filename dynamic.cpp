@@ -275,6 +275,7 @@ class BitList {
 		if (length == capacity) {
 			this->list = (bool *)reallocarray(
 				this->list, this->capacity * 2, sizeof(bool));
+			this->capacity *= 2;
 		}
 
 		this->length++;
