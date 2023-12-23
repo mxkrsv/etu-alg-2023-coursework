@@ -70,6 +70,14 @@ class VitterTreeNode {
 		return this->parent;
 	}
 
+	VitterTreeNode *get_left() {
+		return this->left;
+	}
+
+	VitterTreeNode *get_right() {
+		return this->right;
+	}
+
 	void set_left_child(VitterTreeNode *child) {
 		assert(!this->is_NYT());
 
@@ -318,6 +326,8 @@ class VitterTree {
 		return this->prev_symbol_code;
 	};
 
+	VitterTreeNode *follow_huffman_code(BitList huffman_code);
+
 	VitterTree() : prev_NYT_code(), prev_symbol_code() {
 		root = new VitterTreeNode(true);
 		NYT = root;
@@ -483,6 +493,20 @@ bool VitterTree::insert(char symbol) {
 	}
 
 	return was_new;
+}
+
+VitterTreeNode *VitterTree::follow_huffman_code(BitList huffman_code) {
+	VitterTreeNode *current = this->root;
+
+	for (size_t i = 0; i < huffman_code.get_length(); i++) {
+		current = huffman_code[i] ? current->get_right()
+					  : current->get_left();
+		if (!current) {
+			return nullptr;
+		}
+	}
+
+	return current;
 }
 
 class FileBitWriter {
