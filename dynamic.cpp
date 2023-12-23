@@ -580,7 +580,7 @@ void FileBitWriter::flush() {
 }
 
 // TODO: investigate bad compression ratio
-static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
+static int dynamic_huffman_encode_filter(FILE *input_file, FILE *output_file) {
 	VitterTree vitter_tree;
 
 	FileBitWriter archive_writer = FileBitWriter(output_file);
@@ -668,12 +668,28 @@ class FileBitScanner {
 	}
 };
 
+int dynamic_huffman_decode_filter(FILE *input_file, FILE *output_file) {
+	FileBitScanner archive_reader(input_file);
+
+	int read_result;
+	while ((read_result = archive_reader.next_bit()) != EOF) {
+	}
+
+	if (!feof(input_file)) {
+		perror("fread");
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
+};
+
 int main(int argc, char *argv[]) {
 	const char *input_filename = nullptr;
 	const char *output_filename = nullptr;
+	bool decode = false;
 
 	int opt;
-	while ((opt = getopt(argc, argv, "i:o:")) != -1) {
+	while ((opt = getopt(argc, argv, "i:o:d")) != -1) {
 		switch (opt) {
 			case 'i':
 				assert(optarg);
@@ -682,6 +698,9 @@ int main(int argc, char *argv[]) {
 			case 'o':
 				assert(optarg);
 				output_filename = optarg;
+				break;
+			case 'd':
+				decode = true;
 				break;
 			default:
 				eprintf(USAGE, argv[0]);
@@ -712,5 +731,14 @@ int main(int argc, char *argv[]) {
 		perror("fopen");
 	}
 
-	return dynamic_huffman_filter(input_file, output_file);
+	int ret;
+	if (decode) {
+		ret = dynamic_huffman_decode_filter(input_file, output_file);
+	} else {
+		ret = dynamic_huffman_encode_filter(input_file, output_file);
+	}
+
+	fclose(input_file);
+	fclose(output_file);
+	return ret;
 }
