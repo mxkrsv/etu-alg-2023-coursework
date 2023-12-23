@@ -667,7 +667,55 @@ int dynamic_huffman_decode_filter(FILE *input_file, FILE *output_file) {
 	FileBitScanner archive_reader(input_file);
 
 	int read_result;
+	BitList current_code;
+	VitterTree vitter_tree;
+
+	// Read the first symbol
+	{
+		read_result = archive_reader.next_byte();
+		assert(read_result != EOF);
+		char first_symbol = (char)read_result;
+		fwrite(&first_symbol, sizeof(char), 1, output_file);
+		vitter_tree.insert(first_symbol);
+	}
+
 	while ((read_result = archive_reader.next_bit()) != EOF) {
+		bool bit = read_result ? true : false;
+		current_code.push_back(bit);
+
+		VitterTreeNode *node =
+			vitter_tree.follow_huffman_code(current_code);
+		assert(node);
+		// if (!node) {
+		//	DPRINTF("dynamic_huffman_decode_filter: assuming "
+		//		"padding at the end of the file\n");
+		//	return EXIT_SUCCESS;
+		// }
+
+		char symbol;
+		if (node->is_NYT()) {
+			int symbol_read_result = archive_reader.next_byte();
+
+			if (symbol_read_result == EOF) {
+				DPRINTF("dynamic_huffman_decode_filter: "
+					"assuming "
+					"padding at the end of the file\n");
+				return EXIT_SUCCESS;
+			}
+
+			symbol = (char)symbol_read_result;
+
+		} else if (node->is_symb()) {
+			symbol = node->get_symbol();
+		} else {
+			continue;
+		}
+
+		fwrite(&symbol, sizeof(char), 1, output_file);
+
+		vitter_tree.insert(symbol);
+
+		current_code = BitList();
 	}
 
 	if (!feof(input_file)) {
