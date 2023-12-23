@@ -629,6 +629,45 @@ static int dynamic_huffman_filter(FILE *input_file, FILE *output_file) {
 	return EXIT_SUCCESS;
 }
 
+class FileBitScanner {
+	public:
+	// 0 or 1 -> success, EOF -> EOF or error
+	int next_bit() {
+		if (this->count == 0) {
+			if (this->read_out() == EOF) {
+				return EOF;
+			}
+		}
+
+		bool ret = buffer & (1U << 7);
+		buffer <<= 1;
+
+		this->count--;
+		return ret;
+	}
+
+	FileBitScanner(FILE *file) : buffer(0), count(0) {
+		assert(file);
+		this->file = file;
+	}
+
+	private:
+	FILE *file;
+	uint8_t buffer;
+	size_t count;
+
+	int read_out() {
+		if (fread(&this->buffer, sizeof(this->buffer), 1, this->file) !=
+		    1) {
+			return EOF;
+		};
+
+		this->count = 8;
+
+		return 0;
+	}
+};
+
 int main(int argc, char *argv[]) {
 	const char *input_filename = nullptr;
 	const char *output_filename = nullptr;
