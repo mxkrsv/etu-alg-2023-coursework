@@ -215,57 +215,6 @@ VitterTreeNode *VitterTreeNode::walk_extended(
 	return nullptr;
 }
 
-/*
-class FixedBitList {
-	public:
-	size_t get_length() {
-		return this->length;
-	}
-
-	void push_back(bool bit) {
-		assert(this->length < this->capacity);
-
-		if (bit) {
-			// Set bit
-			this->list |= (1U << (8 - length - 1));
-		} else {
-			// Unset bit
-			this->list &= ~(1U << (8 - length - 1));
-		}
-
-		this->length++;
-	}
-
-	void pop_back() {
-		this->length--;
-	}
-
-	bool operator[](size_t idx) {
-		assert(idx < length);
-		return ((this->list << idx) >> (this->capacity - 1));
-	}
-
-	char *get_string() {
-		char *ret;
-
-		asprintf(&ret, "%.*b", (int)this->length,
-			 this->list >> (this->capacity - this->length));
-
-		return ret;
-	}
-
-	// XXX: only one-byte cap is supported
-	FixedBitList(size_t capacity) : list(0), length(0), capacity(capacity) {
-		assert(capacity == 8);
-	}
-
-	private:
-	uint8_t list;
-	size_t length;
-	size_t capacity;
-};
-*/
-
 class BitList {
 	public:
 	size_t get_length() {
