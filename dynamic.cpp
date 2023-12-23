@@ -605,19 +605,10 @@ static int dynamic_huffman_encode_filter(FILE *input_file, FILE *output_file) {
 class FileBitScanner {
 	public:
 	// 0 or 1 -> success, EOF -> EOF or error
-	int next_bit() {
-		if (this->count == 0) {
-			if (this->read_out() == EOF) {
-				return EOF;
-			}
-		}
+	int next_bit();
 
-		bool ret = buffer & (1U << 7);
-		buffer <<= 1;
-
-		this->count--;
-		return ret;
-	}
+	// EOF -> EOF or error, otherwise (char cast to int) -> success
+	int next_byte();
 
 	FileBitScanner(FILE *file) : buffer(0), count(0) {
 		assert(file);
@@ -640,6 +631,37 @@ class FileBitScanner {
 		return 0;
 	}
 };
+
+int FileBitScanner::next_bit() {
+	if (this->count == 0) {
+		if (this->read_out() == EOF) {
+			return EOF;
+		}
+	}
+
+	bool ret = buffer & (1U << 7);
+	buffer <<= 1;
+
+	this->count--;
+	return ret;
+}
+
+int FileBitScanner::next_byte() {
+	uint8_t ret = 0;
+
+	for (size_t i = 0; i < 8; i++) {
+		int read_result = this->next_bit();
+		if (read_result == EOF) {
+			return EOF;
+		}
+
+		if (read_result) {
+			ret |= 1U << (7 - i);
+		}
+	}
+
+	return (int)ret;
+}
 
 int dynamic_huffman_decode_filter(FILE *input_file, FILE *output_file) {
 	FileBitScanner archive_reader(input_file);
