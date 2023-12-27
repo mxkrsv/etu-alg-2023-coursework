@@ -62,7 +62,7 @@ class VitterTreeNode {
 		this->weight++;
 	}
 
-	uint8_t get_number() {
+	uint16_t get_number() {
 		return this->number;
 	}
 
@@ -83,6 +83,8 @@ class VitterTreeNode {
 
 		this->left = child;
 		child->parent = this;
+
+		assert(this->number != 1);
 		child->number = this->number - 2;
 	}
 
@@ -91,6 +93,8 @@ class VitterTreeNode {
 
 		this->right = child;
 		child->parent = this;
+
+		assert(this->number != 0);
 		child->number = this->number - 1;
 	}
 
@@ -117,7 +121,7 @@ class VitterTreeNode {
 
 	VitterTreeNode(bool NYT)
 	    : left(nullptr), right(nullptr), parent(nullptr), symbol(0),
-	      weight(0), number(UINT8_MAX), not_yet_transferred(NYT),
+	      weight(0), number(UINT16_MAX), not_yet_transferred(NYT),
 	      is_symbol(false) {
 	}
 
@@ -145,7 +149,7 @@ class VitterTreeNode {
 	// Number of occurrences
 	size_t weight;
 	// Implicit node number
-	uint8_t number = UINT8_MAX;
+	uint16_t number = UINT16_MAX;
 
 	bool not_yet_transferred;
 	bool is_symbol;
@@ -180,7 +184,7 @@ void VitterTreeNode::swap_with(VitterTreeNode *other) {
 	other->left = this->left;
 	this->left = tmp;
 
-	uint8_t tmp_number = other->number;
+	uint16_t tmp_number = other->number;
 	other->number = this->number;
 	this->number = tmp_number;
 }
@@ -310,7 +314,7 @@ class BitList {
 class VitterTree {
 	public:
 	VitterTreeNode *search_symbol(char symbol);
-	VitterTreeNode *search_number(uint8_t number);
+	VitterTreeNode *search_number(uint16_t number);
 
 	bool insert(char);
 
@@ -356,7 +360,7 @@ VitterTreeNode *VitterTree::search_symbol(char symbol) {
 	});
 }
 
-VitterTreeNode *VitterTree::search_number(uint8_t number) {
+VitterTreeNode *VitterTree::search_number(uint16_t number) {
 	return this->root->walk([number](VitterTreeNode *node) -> bool {
 		return node->get_number() == number;
 	});
@@ -412,7 +416,7 @@ BitList VitterTree::get_huffman_code_for_NYT() {
 VitterTreeNode *VitterTree::find_block_leader(VitterTreeNode *block_entry) {
 	VitterTreeNode *result = block_entry;
 
-	for (uint8_t i = block_entry->get_number(); i != 0; i++) {
+	for (uint16_t i = block_entry->get_number(); i != 0; i++) {
 		VitterTreeNode *current = this->search_number(i);
 		assert(current);
 
