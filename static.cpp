@@ -174,7 +174,31 @@ void flushBits(FILE *file, uint8_t &buffer, int &bitsWritten) {
 	}
 }
 
-int writeTextToFile(uint8_t *text, size_t size, HuffmanDict &c) {
+void writeHeader(FILE *file, FrequencyDict c) {
+	int uniqueCount = 0;
+	for (int i = 0; i < 256; ++i) {
+		if (c[i] > 0) {
+			uniqueCount++;
+		}
+	}
+	// Записываем количество уникальных символов как short
+	fwrite(&uniqueCount, sizeof(short), 1, file);
+
+	// Записываем пары "символ-частота"
+	for (int i = 0; i < 256; ++i) {
+		if (c[i] > 0) {
+			// Записываем символ (1 байт)
+			unsigned char symbol = (unsigned char)i;
+			fwrite(&symbol, sizeof(unsigned char), 1, file);
+
+			// Записываем частоту (4 байта)
+			fwrite(&c[i], sizeof(c[0]), 1, file);
+		}
+	}
+}
+
+int writeTextToFile(uint8_t *text, size_t size, HuffmanDict &c,
+		    FrequencyDict freqDict) {
 	char nameFile[100];
 	std::cout << "\nWrite the name for the compressed file\n" << std::endl;
 	std::cin >> nameFile;
@@ -184,6 +208,8 @@ int writeTextToFile(uint8_t *text, size_t size, HuffmanDict &c) {
 		std::cout << "Error opening file for writing!" << std::endl;
 		return 1;
 	}
+
+	writeHeader(newfile, freqDict);
 
 	uint8_t buffer = 0;
 	int bitsWritten = 0;
@@ -293,7 +319,7 @@ void huffman(uint8_t *text, size_t size) {
 	treeRoot->encode(code, 0, huffmanDict);
 
 	std::cout << "\nThe original string is:\n" << text << std::endl;
-	writeTextToFile(text, size, huffmanDict);
+	writeTextToFile(text, size, huffmanDict, freqDict);
 	std::cout << "\nThe coding string is:\n";
 	for (size_t i = 0; i < size; i++) {
 		//  Вывод кодов
